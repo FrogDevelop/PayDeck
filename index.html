@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayDeck</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <!-- Главный экран -->
+    <div class="screen" id="mainScreen">
+        
+        <div class="main-content">
+            <!-- Карта сегодняшнего дня -->
+            <div class="card today-card">
+                <div class="card-header">
+                    <h2>Сегодня</h2>
+                </div>
+                <div class="card-content">
+                    <p id="todayDetails">Еще нет данных за сегодня</p>
+                    <div class="earnings-amount" id="todayEarnings">0 ₽</div>
+                </div>
+            </div>
+            
+            <!-- Карта вчерашнего дня -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Вчера</h2>
+                </div>
+                <div class="card-content">
+                    <p id="yesterdayDetails">Нет данных</p>
+                    <div class="earnings-amount" id="yesterdayEarnings">0 ₽</div>
+                </div>
+            </div>
+            <div class="card payouts-card">
+                <span style="font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px;">Выплаты</span>
+                <p>Выплачено: <span id="paidAmount">0 ₽</span></p>
+                <p>Осталось: <span id="unpaidAmount">0 ₽</span></p>
+                <p class="last-payout-date">Последняя выплата: <span id="lastPayoutDate">—</span></p>
+                <button class="btn" onclick="openModal('payoutModal')">Добавить выплату</button>
+            </div>
+            <!-- Карта лучшей смены -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Лучшая смена</h2>
+                    <div class="card-badge best">РЕКОРД</div>
+                </div>
+                <div class="card-content">
+                    <p id="bestShiftDate">Нет данных</p>
+                    <div class="earnings-amount" id="bestShiftAmount">0 ₽</div>
+                    <div class="progress-container">
+                        <div class="progress-label">Прогресс до цели</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="bestShiftProgress"></div>
+                        </div>
+                        <div class="progress-percentage" id="bestShiftPercentage">0%</div>
+                    </div>
+                </div>
+            </div>
+            
+
+            <!-- Секция целей -->
+            <h2 class="section-title">Мои цели</h2>
+            <div class="goals-grid" id="goalsGrid">
+                <!-- Цели будут добавляться через JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD Bar -->
+    <div class="hud-bar">
+        <button class="hud-button" onclick="openModal('calculatorModal')">
+            <i><img src="money.png" alt="" style="width: 30; height: 25px;"></i>
+            <span>Расчет</span>
+        </button>
+        <button class="hud-button" onclick="openModal('statsModal')">
+            <i><img src="book.png" alt="" style="width: 30; height: 25px;"></i>
+            <span>Статистика</span>
+        </button>
+        <button class="hud-button" onclick="openModal('dataModal')">
+            <i><img src="settings.png" alt="" style="width: 30; height: 25px;"></i>
+            <span>Данные</span>
+        </button>
+    </div>
+
+    <!-- Модальное окно калькулятора -->
+    <div id="calculatorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Расчет смены</h3>
+                <button class="close-button" onclick="closeModal('calculatorModal')">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="shiftSalary">Оклад за смену (₽)</label>
+                <input type="number" id="shiftSalary" class="form-control" placeholder="0" min="0" step="0.01">
+            </div>
+            
+            <div class="form-group">
+                <label for="sales">Продажи заведению (₽)</label>
+                <input type="number" id="sales" class="form-control" placeholder="0" min="0" step="0.01">
+            </div>
+            
+            <div class="form-group">
+                <label for="percentage">Процент от продаж (%)</label>
+                <input type="number" id="percentage" class="form-control" placeholder="0" min="0" step="0.1">
+            </div>
+            
+            <div class="form-group">
+                <label for="tips">Чаевые (₽)</label>
+                <input type="number" id="tips" class="form-control" placeholder="0" min="0" step="0.01">
+            </div>
+            
+            <div class="calculation-preview">
+                <div class="preview-item">
+                    <span class="preview-label">Оклад:</span>
+                    <span class="preview-value" id="previewShiftSalary">0 ₽</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Доход от продаж:</span>
+                    <span class="preview-value" id="previewEarnings">0 ₽</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Чаевые:</span>
+                    <span class="preview-value" id="previewTips">0 ₽</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Итого:</span>
+                    <span class="preview-value" id="previewTotal">0 ₽</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary btn-block" onclick="calculate(); closeModal('calculatorModal');">
+                Сохранить расчет
+            </button>
+        </div>
+    </div>
+
+    <div id="payoutModal" class="modal">
+        <div class="modal-content">
+            <h3>Добавить выплату</h3>
+
+            <label for="payoutAmount">Сумма выплаты</label>
+            <input type="number" id="payoutAmount" placeholder="Введите сумму" />
+
+            <button class="btn" onclick="savePayout()">Сохранить</button>
+
+        </div>
+    </div>
+
+
+    <!-- Модальное окно статистики -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Статистика</h3>
+                <button class="close-button" onclick="closeModal('statsModal')">×</button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Оклад</th>
+                            <th>Доход</th>
+                            <th>Чаевые</th>
+                            <th>Итого</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsTable">
+                        <!-- Данные будут добавляться через JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mb-20">
+                <button class="btn btn-secondary btn-block" onclick="exportToExcel()" style="margin-top: 40px;">
+                     Экспорт в Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно целей -->
+    <div id="goalsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Мои цели</h3>
+                <button class="close-button" onclick="closeModal('goalsModal')">×</button>
+            </div>
+            
+            <div class="goals-grid" id="goalsGridModal">
+                <!-- Цели будут добавляться через JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно создания цели -->
+    <div id="createGoalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Новая цель</h3>
+                <button class="close-button" onclick="closeModal('createGoalModal')">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="goalName">Название цели</label>
+                <input type="text" id="goalName" class="form-control" placeholder="Например: Новый телефон">
+            </div>
+            
+            <div class="form-group">
+                <label for="goalAmount">Сумма цели (₽)</label>
+                <input type="number" id="goalAmount" class="form-control" placeholder="0" min="0" step="0.01">
+            </div>
+            
+            <button class="btn btn-primary btn-block" onclick="saveGoal();">
+                Создать цель
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно управления данными -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Управление данными</h3>
+                <button class="close-button" onclick="closeModal('dataModal')">×</button>
+            </div>
+            
+            <div class="mb-16">
+                <button class="btn btn-secondary btn-block" onclick="exportAllData()">
+                     Экспорт всех данных
+                </button>
+            </div>
+            
+            <div class="mb-16">
+                <label for="importData" class="btn btn-secondary btn-block" style="cursor: pointer; text-align: center;">
+                     Импорт данных
+                </label>
+                <input type="file" id="importData" accept=".json,.xlsx,.xls,.csv" style="display: none;" onchange="importData(event)">
+            </div>
+            
+            <div class="mb-20">
+                <button class="btn btn-secondary btn-block" onclick="clearAllData()" style="background: var(--danger-color); color: white;">
+                     Очистить все данные
+                </button>
+            </div>
+            
+            <div style="text-align: center; color: var(--text-secondary); font-size: 13px;">
+                Версия данных: 1.2
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомление -->
+    <div id="notification" class="notification"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
