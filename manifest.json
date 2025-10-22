@@ -10,10 +10,11 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/sim/icon192.png",
+      "src": "/PayDeck/icon192.png",
       "sizes": "192x192",
       "type": "image/png"
     }
   ]
 }
+
 
