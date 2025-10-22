@@ -10,7 +10,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/PayDeck/icon192.png",
+      "src": "/PayDeck/icon512.png",
       "sizes": "192x192",
       "type": "image/png"
     }
